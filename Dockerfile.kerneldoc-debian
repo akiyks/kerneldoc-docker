@@ -1,0 +1,55 @@
+FROM debian:bullseye
+RUN apt-get update && apt-get upgrade -y && apt-get install -y locales && \
+    localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
+    rm -rf /var/lib/apt/lists/*
+ENV LANG en_US.utf8
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ=UTC apt-get install -y tzdata && \
+    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y perl-modules imagemagick graphviz dvipng \
+    fonts-dejavu fonts-texgyre fonts-noto-cjk inkscape \
+    gcc latexmk make python librsvg2-bin texlive-xetex \
+    python3-venv && \
+    rm -rf /var/lib/apt/lists/* && \
+    cd /opt && mktexlsr
+#    cd /usr/local/share/texmf && \
+#    mkdir fonts && cd fonts && \
+#    mv /usr/share/fonts/type1 . && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends texlive-lang-chinese && \
+    rm -rf /var/lib/apt/lists/* && \
+    cd /opt && mktexlsr
+RUN cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
+COPY sarasa-mono-k-regular.ttf sarasa-mono-k-bold.ttf sarasa-mono-k-italic.ttf sarasa-mono-k-bolditalic.ttf /usr/local/share/fonts/
+RUN fc-cache /usr/local/share/fonts/
+COPY requirements.txt /opt/requirements.txt
+ARG uid=1000
+ARG gid=1000
+ARG user=kerneldoc
+ARG group=kerneldoc
+RUN if [ $uid -ne 0 ] ; then \
+    groupadd -g $gid $group ; \
+    useradd -u $uid -g $gid -m $user ; \
+    fi
+USER $uid:$gid
+WORKDIR /home/kerneldoc
+RUN /usr/bin/python3 -m venv sphinx_2.4.4 && \
+    . sphinx_2.4.4/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements.txt && \
+    deactivate
+COPY requirements-1.7.9.txt /opt/requirements-1.7.9.txt
+RUN /usr/bin/python3 -m venv sphinx_1.7.9 && \
+    . sphinx_1.7.9/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements-1.7.9.txt && \
+    deactivate
+COPY requirements-latest.txt /opt/requirements-latest.txt
+RUN /usr/bin/python3 -m venv sphinx_latest && \
+    . sphinx_latest/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements-latest.txt && \
+    deactivate
+VOLUME /work
+WORKDIR /work
+CMD /bin/bash
