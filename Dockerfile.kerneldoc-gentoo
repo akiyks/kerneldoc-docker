@@ -1,10 +1,10 @@
 # Note:
-# This will build a large image of more than 7 GiB, with the build time
-# of a couple of hours (depending on the system performance)
+# This will build an image of almost 4 GiB, with the build time
+# of a few hours or more (depending on the system performance)!
 FROM gentoo/stage3:latest
 RUN emerge --sync
-# Workaround build error
-#  hint at: https://forums.gentoo.org/viewtopic-t-1125304-start-0.html
+# Workaround to build error
+#  Hinted at: https://forums.gentoo.org/viewtopic-t-1125304-start-0.html
 ENV FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox -sandbox -usersandbox"
 RUN echo 'USE="X -gtk -gnome -alsa truetype svg xml png xetex icu fontconfig"' >> /etc/portage/make.conf && \
     echo "media-gfx/imagemagick pango q8" > /etc/portage/package.use/imagemagick && \
@@ -13,8 +13,9 @@ RUN echo 'USE="X -gtk -gnome -alsa truetype svg xml png xetex icu fontconfig"' >
     echo "app-text/poppler cairo" > /etc/portage/package.use/inkscape
 RUN emerge media-gfx/inkscape media-gfx/graphviz media-gfx/imagemagick latexmk \
     media-fonts/dejavu media-fonts/noto-cjk emerge dev-texlive/texlive-xetex \
-    dev-texlive/texlive-langchinese
-# Permit convert to PDF in Imagemagick's policy
+    dev-texlive/texlive-langchinese && \
+    rm -f /var/cache/distfiles/*
+# Permit PDF output in Imagemagick's policy
 RUN cd /etc/ImageMagick-7 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
 COPY requirements.txt requirements-latest.txt /opt/
 ARG uid=1000
