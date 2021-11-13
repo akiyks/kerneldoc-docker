@@ -1,0 +1,42 @@
+# Note:
+# This will build a large image of more than 7 GiB, with the build time
+# of a couple of hours (depending on the system performance)
+FROM gentoo/stage3:latest
+RUN emerge --sync
+# Workaround build error
+#  hint at: https://forums.gentoo.org/viewtopic-t-1125304-start-0.html
+ENV FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox -sandbox -usersandbox"
+RUN echo 'USE="X -gtk -gnome -alsa truetype svg xml png xetex icu fontconfig"' >> /etc/portage/make.conf && \
+    echo "media-gfx/imagemagick pango q8" > /etc/portage/package.use/imagemagick && \
+    echo "media-gfx/graphviz cairo pdf" > /etc/portage/package.use/graphviz && \
+    echo "app-text/texlive-core cjk" > /etc/portage/package.use/texlive-langchinese && \
+    echo "app-text/poppler cairo" > /etc/portage/package.use/inkscape
+RUN emerge media-gfx/inkscape media-gfx/graphviz media-gfx/imagemagick latexmk \
+    media-fonts/dejavu media-fonts/noto-cjk emerge dev-texlive/texlive-xetex \
+    dev-texlive/texlive-langchinese
+# Permit convert to PDF in Imagemagick's policy
+RUN cd /etc/ImageMagick-7 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
+COPY requirements.txt requirements-latest.txt /opt/
+ARG uid=1000
+ARG gid=1000
+ARG user=kerneldoc
+ARG group=kerneldoc
+RUN if [ $uid -ne 0 ] ; then \
+    groupadd -g $gid $group ; \
+    useradd -u $uid -g $gid -m $user ; \
+    fi
+USER $uid:$gid
+WORKDIR /home/kerneldoc
+RUN /usr/bin/python3 -m venv sphinx_2.4.4 && \
+    . sphinx_2.4.4/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements.txt && \
+    deactivate
+RUN /usr/bin/python3 -m venv sphinx_latest && \
+    . sphinx_latest/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements-latest.txt && \
+    deactivate
+VOLUME /work
+WORKDIR /work
+CMD /bin/bash
