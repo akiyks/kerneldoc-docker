@@ -13,7 +13,7 @@ RUN apt-get update && \
 RUN cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
 COPY sarasa-mono-k-regular.ttf sarasa-mono-k-bold.ttf sarasa-mono-k-italic.ttf sarasa-mono-k-bolditalic.ttf /usr/local/share/fonts/
 RUN fc-cache /usr/local/share/fonts/
-COPY requirements.txt /opt/requirements.txt
+COPY requirements.txt requirements-1.7.9.txt requirements-latest.txt /opt/
 ARG uid=1000
 ARG gid=1000
 ARG user=kerneldoc
@@ -26,16 +26,17 @@ USER $uid:$gid
 WORKDIR /home/kerneldoc
 RUN /usr/bin/python3 -m venv sphinx_2.4.4 && \
     . sphinx_2.4.4/bin/activate && \
+    pip install --upgrade pip && \
     pip install -r /opt/requirements.txt && \
     deactivate
-COPY requirements-1.7.9.txt /opt/requirements-1.7.9.txt
 RUN /usr/bin/python3 -m venv sphinx_1.7.9 && \
-    . sphinx_1.7.9/bin/activate && \
+    . sphinx_latest/bin/activate && \
+    pip install --upgrade pip && \
     pip install -r /opt/requirements-1.7.9.txt && \
     deactivate
-COPY requirements-latest.txt /opt/requirements-latest.txt
 RUN /usr/bin/python3 -m venv sphinx_latest && \
     . sphinx_latest/bin/activate && \
+    pip install --upgrade pip && \
     pip install -r /opt/requirements-latest.txt && \
     deactivate
 VOLUME /work
