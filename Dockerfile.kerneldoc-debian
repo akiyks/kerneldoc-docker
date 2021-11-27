@@ -12,13 +12,13 @@ RUN apt-get update && \
     python3-venv && \
     rm -rf /var/lib/apt/lists/* && \
     cd /opt && mktexlsr
-#    cd /usr/local/share/texmf && \
-#    mkdir fonts && cd fonts && \
-#    mv /usr/share/fonts/type1 . && \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends texlive-lang-chinese && \
     rm -rf /var/lib/apt/lists/* && \
     cd /opt && mktexlsr
+RUN cd /usr/local/share/texmf && \
+    mkdir fonts && cd fonts && \
+    mv /usr/share/fonts/opentype/urw-base35/StandardSymbolsPS.otf .
 RUN cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
 COPY sarasa-mono-k-regular.ttf sarasa-mono-k-bold.ttf sarasa-mono-k-italic.ttf sarasa-mono-k-bolditalic.ttf /usr/local/share/fonts/
 RUN fc-cache /usr/local/share/fonts/
