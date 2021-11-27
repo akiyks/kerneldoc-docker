@@ -1,6 +1,6 @@
 FROM alpine:latest
 RUN apk -U add --no-cache make inkscape graphviz \
-    nano vim perl python3 curl \
+    perl python3 wget \
     ca-certificates bash grep sed librsvg \
     coreutils ttf-liberation ttf-dejavu font-noto-cjk
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1 NOPERLDOC=1
@@ -11,11 +11,11 @@ WORKDIR /opt
 #  https://ftp.yz.yamagata-u.ac.jp/pub/CTAN/systems/texlive/tlnet
 ARG tlrepo=https://mirror.ctan.org/systems/texlive/tlnet
 RUN wget $tlrepo/install-tl-unx.tar.gz && \
-    tar xf install-tl-unx.tar.gz && \
-    cd  install-tl-* && perl install-tl -profile /opt/texlive.profile \
-    -repository $tlrepo && \
-    cd /opt && rm -rf install-tl-* && \
-    find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} \;
+    tar xf install-tl-unx.tar.gz && rm -rf *.tar.gz && cd install-tl-* && \
+    perl install-tl -profile /opt/texlive.profile -repository $tlrepo && \
+    cd /opt && \
+    rm -rf /usr/local/texlive/2021/bin/x86_64-linux && \
+    find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
 ENV PATH=/usr/local/bin:/usr/local/texlive/2021/bin/x86_64-linuxmusl:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 RUN tlmgr --repository $tlrepo install \
     collection-plaingeneric \
@@ -23,7 +23,8 @@ RUN tlmgr --repository $tlrepo install \
     mdwtools multirow needspace parskip tabulary threeparttable ucs upquote \
     wrapfig ctex latexmk varwidth titlesec \
     fancyvrb float setspace tex-gyre && \
-    find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} \;
+    rm -rf /usr/local/texlive/2021/bin/x86_64-linux && \
+    find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
 COPY requirements-latest.txt /opt
 WORKDIR /home/kerneldoc
 RUN /usr/bin/python3 -m venv sphinx_latest && \
