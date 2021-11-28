@@ -8,11 +8,12 @@ ENV LANG en_US.utf8
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ=UTC apt-get install -y tzdata && \
     rm -rf /var/lib/apt/lists/*
 RUN apt-get update && \
-    apt-get install -y perl-modules imagemagick graphviz dvipng \
+    apt-get install -y perl-modules \
     fonts-dejavu fonts-texgyre fonts-noto-cjk fonts-liberation \
-    latexmk make python librsvg2-bin python3-venv inkscape && \
+    make librsvg2-bin && \
     apt-get install -y --no-install-recommends texlive-lang-chinese \
-    texlive-xetex texlive-fonts-recommended tex-gyre && \
+    texlive-xetex texlive-fonts-recommended tex-gyre inkscape graphviz dvipng \
+    python3-venv imagemagick latexmk && \
     rm -rf /var/lib/apt/lists/*
 RUN cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
 COPY sarasa-mono-k-regular.ttf sarasa-mono-k-bold.ttf sarasa-mono-k-italic.ttf sarasa-mono-k-bolditalic.ttf /usr/local/share/fonts/
