@@ -1,5 +1,5 @@
 FROM alpine:latest
-RUN apk -U add --no-cache make inkscape graphviz \
+RUN apk -U add --no-cache make inkscape graphviz imagemagick \
     perl python3 wget \
     ca-certificates bash grep sed librsvg \
     coreutils ttf-liberation ttf-dejavu font-noto-cjk
