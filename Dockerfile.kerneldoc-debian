@@ -1,3 +1,5 @@
+# convert(1) of ImageMagick and rsvg-convert(1) of librsvg are not installed
+# Only latest Sphinx is installed
 FROM debian:bullseye-slim
 RUN apt-get update && apt-get upgrade -y && apt-get install -y locales && \
     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
@@ -8,20 +10,20 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ=UTC apt-get install -y t
 RUN apt-get update && \
     apt-get install -y perl-modules \
     fonts-dejavu fonts-texgyre fonts-noto-cjk fonts-liberation \
-    make librsvg2-bin && \
+    make && \
     apt-get install -y --no-install-recommends texlive-lang-chinese \
     texlive-xetex texlive-fonts-recommended tex-gyre inkscape graphviz dvipng \
-    python3-venv imagemagick latexmk && \
+    python3-venv latexmk && \
     rm -rf /var/lib/apt/lists/* && \
     cd /opt && mktexlsr
 RUN cd /usr/local/share/texmf && \
     mkdir fonts && cd fonts && \
     mv /usr/share/fonts/opentype/urw-base35/StandardSymbolsPS.otf . && \
     fc-cache -s
-RUN cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
+#RUN cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
 COPY sarasa-mono-k-regular.ttf sarasa-mono-k-bold.ttf sarasa-mono-k-italic.ttf sarasa-mono-k-bolditalic.ttf /usr/local/share/fonts/
 RUN fc-cache /usr/local/share/fonts/
-COPY requirements.txt /opt/requirements.txt
+COPY requirements-latest.txt /opt/
 ARG uid=0
 ARG gid=0
 ARG user=kerneldoc
@@ -32,18 +34,6 @@ RUN if [ $uid -ne 0 ] ; then \
     fi
 USER $uid:$gid
 WORKDIR /home/kerneldoc
-RUN /usr/bin/python3 -m venv sphinx_2.4.4 && \
-    . sphinx_2.4.4/bin/activate && \
-    pip install --upgrade pip && \
-    pip install -r /opt/requirements.txt && \
-    deactivate
-COPY requirements-1.7.9.txt /opt/requirements-1.7.9.txt
-RUN /usr/bin/python3 -m venv sphinx_1.7.9 && \
-    . sphinx_1.7.9/bin/activate && \
-    pip install --upgrade pip && \
-    pip install -r /opt/requirements-1.7.9.txt && \
-    deactivate
-COPY requirements-latest.txt /opt/requirements-latest.txt
 RUN /usr/bin/python3 -m venv sphinx_latest && \
     . sphinx_latest/bin/activate && \
     pip install --upgrade pip && \
