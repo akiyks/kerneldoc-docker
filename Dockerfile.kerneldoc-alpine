@@ -1,5 +1,7 @@
 FROM alpine:latest
 # librsvg is required by imagemagick-libs or ???
+# This one doesn't install imagemagick librsvg.
+#   Works with pending kfigure.py updates with inkscape support
 RUN apk -U add --no-cache make graphviz inkscape \
     perl python3 wget \
     ca-certificates bash grep sed \
