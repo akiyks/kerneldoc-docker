@@ -39,6 +39,7 @@ ARG group=kerneldoc
 RUN if [ $uid -ne 0 ] ; then addgroup --gid $gid $group ; \
     adduser --uid $uid --ingroup $group --disabled-password $user ; \
     fi
+USER $uid:$gid
 WORKDIR /home/kerneldoc
 RUN /usr/bin/python3 -m venv sphinx_latest && \
     . sphinx_latest/bin/activate && \
