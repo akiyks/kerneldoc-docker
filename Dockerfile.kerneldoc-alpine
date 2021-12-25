@@ -18,12 +18,15 @@ RUN wget $tlrepo/install-tl-unx.tar.gz && \
     rm -rf /usr/local/texlive/2021/bin/x86_64-linux && \
     find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
 ENV PATH=/usr/local/bin:/usr/local/texlive/2021/bin/x86_64-linuxmusl:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+# Remove unused large font packages after the fact:
+# arphic, fandol, fonts-tlwg, tipa, uhc, wadalab
 RUN tlmgr --repository $tlrepo install \
     babel babel-english \
     anyfontsize capt-of cmap eqparbox fancybox fncychap fancyhdr framed \
     mdwtools multirow needspace parskip tabulary threeparttable ucs upquote \
     wrapfig ctex latexmk varwidth titlesec \
-    fancyvrb float setspace tex-gyre oberdiek && \
+    fancyvrb float setspace tex-gyre oberdiek dvipng && \
+    tlmgr remove --force arphic fandol fonts-tlwg tipa uhc wadalab && \
     rm -rf /usr/local/texlive/2021/bin/x86_64-linux && \
     find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
 COPY requirements-latest.txt /opt
