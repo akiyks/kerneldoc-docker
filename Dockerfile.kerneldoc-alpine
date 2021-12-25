@@ -32,6 +32,11 @@ RUN tlmgr --repository $tlrepo install \
     rm -rf /usr/local/texlive/2021/bin/x86_64-linux && \
     find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
 COPY requirements-latest.txt /opt
+ARG uid=0
+ARG gid=0
+RUN if [ $uid -ne 0 ] ; then addgroup --gid $gid $group ; \
+    adduser --uid $uid --ingroup $group --disabled-password $user ; \
+    fi
 WORKDIR /home/kerneldoc
 RUN /usr/bin/python3 -m venv sphinx_latest && \
     . sphinx_latest/bin/activate && \
