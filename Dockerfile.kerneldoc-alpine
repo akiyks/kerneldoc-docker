@@ -34,6 +34,8 @@ RUN tlmgr --repository $tlrepo install \
 COPY requirements-latest.txt /opt
 ARG uid=0
 ARG gid=0
+ARG user=kerneldoc
+ARG group=kerneldoc
 RUN if [ $uid -ne 0 ] ; then addgroup --gid $gid $group ; \
     adduser --uid $uid --ingroup $group --disabled-password $user ; \
     fi
