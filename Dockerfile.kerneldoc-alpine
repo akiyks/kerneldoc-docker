@@ -1,7 +1,8 @@
 FROM alpine:latest
-RUN apk -U add --no-cache make inkscape graphviz imagemagick \
+# librsvg is required by imagemagick-libs or ???
+RUN apk -U add --no-cache make graphviz inkscape \
     perl python3 wget \
-    ca-certificates bash grep sed librsvg \
+    ca-certificates bash grep sed \
     coreutils ttf-liberation ttf-dejavu font-noto-cjk
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1 NOPERLDOC=1
 COPY texlive.profile /opt/texlive.profile
@@ -18,11 +19,11 @@ RUN wget $tlrepo/install-tl-unx.tar.gz && \
     find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
 ENV PATH=/usr/local/bin:/usr/local/texlive/2021/bin/x86_64-linuxmusl:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
 RUN tlmgr --repository $tlrepo install \
-    collection-plaingeneric \
-    anyfontsize capt-of cmap eqparbox fancybox fncychap framed \
+    babel babel-english \
+    anyfontsize capt-of cmap eqparbox fancybox fncychap fancyhdr framed \
     mdwtools multirow needspace parskip tabulary threeparttable ucs upquote \
     wrapfig ctex latexmk varwidth titlesec \
-    fancyvrb float setspace tex-gyre && \
+    fancyvrb float setspace tex-gyre oberdiek && \
     rm -rf /usr/local/texlive/2021/bin/x86_64-linux && \
     find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
 COPY requirements-latest.txt /opt
