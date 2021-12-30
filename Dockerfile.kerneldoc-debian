@@ -1,6 +1,17 @@
-# convert(1) of ImageMagick and rsvg-convert(1) of librsvg are not installed
-# Only latest Sphinx is installed
-FROM debian:bullseye-slim
+# Examples of build options:
+# o default
+#  Debian bullseye based, with Inkscape only
+# o --build-arg rel=buster --build-arg ink=0 --build-arg img=1 --build-arg rsvg=1
+#   Debian buster based, without Inkscape, with ImageMagick and rsvg-convert
+# o --build-arg rel=buster --build-arg ink=0 --build-arg img=1
+#   Without Inkscape, with ImageMagick, without rsvg-convert
+#   Note: In this combination, convert(1) fails due to lack of rsvg-convert(1).
+# o --build-arg ink=0 --build-arg img=1 --build-arg rsvg=1
+# o --build-arg ink=0 --build-arg img=1 --build-arg rsvg=0
+ARG rel=bullseye
+FROM debian:$rel-slim
+ARG rel
+ENV REL $rel
 RUN apt-get update && apt-get upgrade -y && apt-get install -y locales && \
     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
     rm -rf /var/lib/apt/lists/*
@@ -12,15 +23,34 @@ RUN apt-get update && \
     fonts-dejavu fonts-texgyre fonts-noto-cjk fonts-liberation \
     make && \
     apt-get install -y --no-install-recommends texlive-lang-chinese \
-    texlive-xetex texlive-fonts-recommended tex-gyre inkscape graphviz dvipng \
+    texlive-xetex texlive-fonts-recommended tex-gyre graphviz dvipng \
     python3-venv latexmk && \
+    rm -rf /var/lib/apt/lists/*
+ARG ink=1
+RUN if [ $ink -ne 0 ] ; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends inkscape && \
+    rm -rf /var/lib/apt/lists/* ; \
+    fi
+ARG img=0
+RUN if [ $img -ne 0 ] ; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends imagemagick && \
     rm -rf /var/lib/apt/lists/* && \
-    cd /opt && mktexlsr
-RUN cd /usr/local/share/texmf && \
+    cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml ; \
+    fi
+ARG rsvg=0
+RUN if [ $rsvg -ne 0 ] ; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends librsvg2-bin && \
+    rm -rf /var/lib/apt/lists/* ; \
+    fi
+RUN if [ "$REL" = "bullseye" ] ; then \
+    cd /usr/local/share/texmf && \
     mkdir fonts && cd fonts && \
     mv /usr/share/fonts/opentype/urw-base35/StandardSymbolsPS.otf . && \
-    fc-cache -s
-#RUN cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
+    fc-cache -s ; \
+    fi
 COPY sarasa-mono-k-regular.ttf sarasa-mono-k-bold.ttf sarasa-mono-k-italic.ttf sarasa-mono-k-bolditalic.ttf /usr/local/share/fonts/
 RUN fc-cache /usr/local/share/fonts/
 COPY requirements-latest.txt /opt/
