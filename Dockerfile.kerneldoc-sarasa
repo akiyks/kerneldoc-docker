@@ -1,3 +1,11 @@
+# ARG variables
+# --build-arg ink=0 --build-arg img=1 --build-arg rsvg=1
+#
+# Defaults are:
+#   ink=1 img=0 rsvg=0
+#
+# Note:
+# On Debian based distros, convert(1) does not have its own SVG renderer.
 FROM ubuntu:bionic
 RUN apt-get update && apt-get upgrade -y && apt-get install -y locales && \
     localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
@@ -6,11 +14,29 @@ ENV LANG en_US.utf8
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ=UTC apt-get install -y tzdata && \
     rm -rf /var/lib/apt/lists/*
 RUN apt-get update && \
-    apt-get install -y perl-modules imagemagick graphviz dvipng \
+    apt-get install -y perl-modules graphviz dvipng \
     fonts-dejavu fonts-texgyre fonts-noto-cjk fonts-liberation \
-    latexmk make python librsvg2-bin texlive-xetex python3-venv inkscape && \
+    latexmk make python texlive-xetex python3-venv && \
     rm -rf /var/lib/apt/lists/*
-RUN cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml
+ARG ink=1
+RUN if [ $ink -ne 0 ] ; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends inkscape && \
+    rm -rf /var/lib/apt/lists/* ; \
+    fi
+ARG img=0
+RUN if [ $img -ne 0 ] ; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends imagemagick && \
+    rm -rf /var/lib/apt/lists/* && \
+    cd /etc/ImageMagick-6 && sed -i 's+policy domain="coder" rights="none" pattern="PDF"+policy domain="coder" rights="read|write" pattern="PDF"+' policy.xml ; \
+    fi
+ARG rsvg=0
+RUN if [ $rsvg -ne 0 ] ; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends librsvg2-bin && \
+    rm -rf /var/lib/apt/lists/* ; \
+    fi
 COPY sarasa-mono-k-regular.ttf sarasa-mono-k-bold.ttf sarasa-mono-k-italic.ttf sarasa-mono-k-bolditalic.ttf /usr/local/share/fonts/
 RUN fc-cache /usr/local/share/fonts/
 COPY requirements.txt requirements-1.7.9.txt requirements-latest.txt /opt/
