@@ -1,12 +1,15 @@
 FROM alpine:latest
+# ARG variable example use:
+# --build-arg ink=0 --build-arg img=1
+#
+# Defaults are:
+#   ink=1 img=0
 # librsvg is required by imagemagick-libs or ???
-# This one doesn't install imagemagick librsvg.
-#   Works with pending kfigure.py updates with inkscape support
-RUN apk -U add --no-cache make graphviz inkscape \
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1 NOPERLDOC=1
+RUN apk -U add --no-cache make graphviz \
     perl python3 wget \
     ca-certificates bash grep sed \
     coreutils ttf-liberation ttf-dejavu font-noto-cjk
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1 NOPERLDOC=1
 COPY texlive.profile /opt/texlive.profile
 WORKDIR /opt
 # Alternatives of tlrepo in or near JP
@@ -31,6 +34,12 @@ RUN tlmgr --repository $tlrepo install \
     tlmgr remove --force arphic fandol fonts-tlwg tipa uhc wadalab && \
     rm -rf /usr/local/texlive/2021/bin/x86_64-linux && \
     find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
+ARG ink=1
+RUN if [ $ink -ne 0 ] ; then apk -U add --no-cache inkscape ; \
+    fi
+ARG img=0
+RUN if [ $img -ne 0 ] ; then apk -U add --no-cache imagemagick ; \
+    fi
 COPY requirements-latest.txt /opt
 ARG uid=0
 ARG gid=0
