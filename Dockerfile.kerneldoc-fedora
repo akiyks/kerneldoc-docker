@@ -1,0 +1,59 @@
+ARG rel=latest
+FROM fedora:$rel
+# (librsvg2-tools ImageMagick) or inkscape
+# texlive-luatex85 ? texlive-collection-latex ? texlive-collection-basic ?
+RUN dnf -y update && \
+    dnf install -y --setopt=tsflags=nodocs --setopt=install_weak_deps=False \
+    make graphviz latexmk \
+    dejavu-sans-mono-fonts dejavu-serif-fonts google-noto-cjk-fonts \
+    liberation-mono-fonts liberation-serif-fonts liberation-sans-fonts \
+    texlive-xecjk texlive-ctex \
+    texlive-amscls texlive-anyfontsize texlive-capt-of texlive-cmap \
+    texlive-tex-gyre texlive-collection-basic texlive-babel texlive-babel-english \
+    texlive-ec texlive-eqparbox texlive-fancybox texlive-fncychap \
+    texlive-framed texlive-mdwtools texlive-multirow texlive-needspace \
+    texlive-parskip texlive-tabulary texlive-threeparttable texlive-ucs \
+    texlive-upquote texlive-wrapfig texlive-xetex-bin && \
+    dnf clean all && \
+    mktexlsr
+ARG ink=1
+RUN if [ $ink -ne 0 ] ; then \
+    dnf -y update && \
+    dnf install -y --setopt=tsflags=nodocs --setopt=install_weak_deps=False \
+    inkscape && \
+    dnf clean all ; \
+    fi
+ARG img=0
+RUN if [ $img -ne 0 ] ; then \
+    dnf -y update && \
+    dnf install -y --setopt=tsflags=nodocs --setopt=install_weak_deps=False \
+    ImageMagick && \
+    dnf clean all ; \
+    fi
+ARG rsvg=0
+RUN if [ $rsvg -ne 0 ] ; then \
+    dnf -y update && \
+    dnf install -y --setopt=tsflags=nodocs --setopt=install_weak_deps=False \
+    librsvg2-tools && \
+    dnf clean all ; \
+    fi
+COPY requirements-latest.txt  /opt/
+ARG uid=0
+ARG gid=0
+ARG user=kerneldoc
+ARG group=kerneldoc
+RUN if [ $uid -ne 0 ] ; then \
+    groupadd -g $gid $group ; \
+    useradd -u $uid -g $gid -m $user ; \
+    fi
+VOLUME /work
+USER $uid:$gid
+WORKDIR /home/kerneldoc
+RUN /usr/bin/python3 -m venv sphinx_latest && \
+    . sphinx_latest/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements-latest.txt && \
+    deactivate
+VOLUME /work
+WORKDIR /work
+CMD /bin/bash
