@@ -1,11 +1,23 @@
 FROM archlinux:latest
+# ARG variables: ink for inkscape, img for imagemagick
+# extra/librsvg is in dependency of graphviz ??
+# Defaults: ink=1, img=0
 RUN pacman --noconfirm -Syu && \
-    pacman --noconfirm -S perl which imagemagick graphviz make \
-    noto-fonts-cjk python extra/librsvg inkscape ttf-dejavu ttf-liberation \
+    pacman --noconfirm -S perl which graphviz make \
+    noto-fonts-cjk python ttf-dejavu ttf-liberation \
     texlive-core texlive-latexextra texlive-langchinese texlive-bin && \
     rm -rf /var/cache/pacman/pkg/
-COPY requirements.txt requirements-1.7.9.txt \
-     requirements-latest.txt /opt/
+ARG ink=1
+ARG img=0
+RUN pacman --noconfirm -Syu && \
+    if [ $ink -ne 0 ] ; then \
+    pacman --noconfirm -S inkscape ; \
+    fi && \
+    if [ $img -ne 0 ] ; then \
+    pacman --noconfirm -S imagemagick ; \
+    fi && \
+    rm -rf /var/cache/pacman/pkg/
+COPY requirements-latest.txt /opt/
 ARG uid=0
 ARG gid=0
 ARG user=kerneldoc
@@ -16,16 +28,6 @@ RUN if [ $uid -ne 0 ] ; then \
     fi
 USER $uid:$gid
 WORKDIR /home/kerneldoc
-RUN /usr/bin/python3 -m venv sphinx_2.4.4 && \
-    . sphinx_2.4.4/bin/activate && \
-    pip install --upgrade pip && \
-    pip install -r /opt/requirements.txt && \
-    deactivate
-RUN /usr/bin/python3 -m venv sphinx_1.7.9 && \
-    . sphinx_1.7.9/bin/activate && \
-    pip install --upgrade pip && \
-    pip install -r /opt/requirements-1.7.9.txt && \
-    deactivate
 RUN /usr/bin/python3 -m venv sphinx_latest && \
     . sphinx_latest/bin/activate && \
     pip install --upgrade pip && \
