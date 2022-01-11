@@ -1,0 +1,75 @@
+# FROM opensuse/leap:15.3, xdvipdfmx emits harmless warnings of
+#  "No Unicode mapping available: GID=nnnn"
+# Fonts installed by noto-sans-cjk-fonts package don't have family
+#  names of "Noto Sans CJK SC", but those of "Noto Sans SC".
+#  They are not compatible with the xeCJK package which expects CJK
+#  attribute.
+#  Use "Noto Sans CJK" and "Noto Serif CJK" fonts at
+#     https://noto-website-2.storage.googleapis.com
+#  instead.
+
+#From opensuse/leap:15.4
+From opensuse/tumbleweed
+# rsvg-convert inkscape
+RUN zypper refresh && zypper install -y --no-recommends \
+    perl shadow fontconfig \
+    ImageMagick make python rsvg-convert \
+    graphviz dejavu-fonts liberation-fonts curl unzip which \
+    texlive-amscls texlive-anyfontsize \
+    texlive-babel-english texlive-capt-of texlive-caption texlive-cmap \
+    texlive-courier texlive-dvips texlive-dvipng-bin texlive-eqparbox \
+    texlive-fancybox \
+    texlive-fancyvrb texlive-float texlive-fncychap texlive-framed \
+    texlive-helvetic texlive-luatex85 texlive-makeindex texlive-mdwtools \
+    texlive-metafont texlive-metapost texlive-multirow texlive-needspace \
+    texlive-palatino texlive-parskip texlive-polyglossia texlive-preview \
+    texlive-psnfss texlive-tabulary texlive-threeparttable texlive-times \
+    texlive-titlesec texlive-ucs texlive-upquote texlive-wrapfig \
+    texlive-zapfchan texlive-xetex-bin texlive-enumitem texlive-xecjk \
+    texlive-tex-gyre texlive-latexmk-bin texlive-colortbl texlive-zapfding
+WORKDIR /root
+RUN mkdir work && cd work && \
+    curl https://noto-website-2.storage.googleapis.com/pkgs/NotoSansCJK-Regular.ttc.zip -L -o NotoSansCJK-Regular.ttc.zip && \
+    curl https://noto-website-2.storage.googleapis.com/pkgs/NotoSansCJK-Bold.ttc.zip -L -o NotoSansCJK-Bold.ttc.zip && \
+    curl https://noto-website-2.storage.googleapis.com/pkgs/NotoSerifCJK-Regular.ttc.zip -L -o NotoSerifCJK-Regular.ttc.zip && \
+    curl https://noto-website-2.storage.googleapis.com/pkgs/NotoSerifCJK-Bold.ttc.zip -L -o NotoSerifCJK-Bold.ttc.zip && \
+    unzip NotoSansCJK-Regular.ttc.zip && mkdir fonts && \
+    mv NotoSansCJK-Regular.ttc fonts/ && rm README LICENSE_OFL.txt && \
+    unzip NotoSansCJK-Bold.ttc.zip && \
+    mv NotoSansCJK-Bold.ttc fonts/ && rm README LICENSE_OFL.txt && \
+    unzip NotoSerifCJK-Regular.ttc.zip && \
+    mv NotoSerifCJK-Regular.ttc fonts/ && rm README LICENSE_OFL.txt && \
+    unzip NotoSerifCJK-Bold.ttc.zip && \
+    mv NotoSerifCJK-Bold.ttc fonts/ && \
+    chmod o+r fonts/*.ttc && \
+    mv fonts /usr/local/share/ && cd /root && rm -rf work/ && \
+    fc-cache -fv && fc-list
+ARG uid=0
+ARG gid=0
+ARG user=kerneldoc
+ARG group=kerneldoc
+RUN if [ $uid -ne 0 ] ; then \
+    groupadd -g $gid $group ; \
+    useradd -u $uid -g $gid -m $user ; \
+    fi
+COPY requirements.txt requirements-1.7.9.txt requirements-latest.txt /opt/
+USER $uid:$gid
+WORKDIR /home/kerneldoc
+RUN /usr/bin/python3 -m venv sphinx_2.4.4 && \
+    . sphinx_2.4.4/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements.txt && \
+    deactivate
+RUN /usr/bin/python3 -m venv sphinx_1.7.9 && \
+    . sphinx_1.7.9/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements-1.7.9.txt && \
+    deactivate
+RUN /usr/bin/python3 -m venv sphinx_latest && \
+    . sphinx_latest/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements-latest.txt && \
+    deactivate
+VOLUME /work
+WORKDIR /work
+CMD /bin/bash
