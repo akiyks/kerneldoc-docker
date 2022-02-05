@@ -1,5 +1,5 @@
 # Examples of build options:
-# o default
+# o default (with Noto CJK fonts)
 #  Debian bullseye based, with Inkscape only
 # o --build-arg rel=buster --build-arg ink=0 --build-arg img=1 --build-arg rsvg=1
 #   Debian buster based, without Inkscape, with ImageMagick and rsvg-convert
@@ -8,6 +8,8 @@
 #   Note: In this combination, convert(1) fails due to lack of rsvg-convert(1).
 # o --build-arg ink=0 --build-arg img=1 --build-arg rsvg=1
 # o --build-arg ink=0 --build-arg img=1 --build-arg rsvg=0
+# o --build-arg cjk=0
+#   Without Noto CJK fonts
 ARG rel=bullseye
 FROM debian:$rel-slim
 ARG rel
@@ -20,12 +22,18 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive TZ=UTC apt-get install -y t
     rm -rf /var/lib/apt/lists/*
 RUN apt-get update && \
     apt-get install -y perl-modules \
-    fonts-dejavu fonts-texgyre fonts-noto-cjk fonts-liberation \
+    fonts-dejavu fonts-texgyre fonts-liberation \
     make && \
     apt-get install -y --no-install-recommends texlive-lang-chinese \
     texlive-xetex texlive-fonts-recommended tex-gyre graphviz dvipng \
     python3-venv latexmk && \
     rm -rf /var/lib/apt/lists/*
+ARG cjk=1
+RUN if [ $cjk -ne 0 ] ; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends fonts-noto-cjk && \
+    rm -rf /var/lib/apt/lists/* ; \
+    fi
 ARG ink=1
 RUN if [ $ink -ne 0 ] ; then \
     apt-get update && \
@@ -45,15 +53,15 @@ RUN if [ $rsvg -ne 0 ] ; then \
     apt-get install -y --no-install-recommends librsvg2-bin && \
     rm -rf /var/lib/apt/lists/* ; \
     fi
-RUN if [ "$REL" = "bullseye" -o "$REL" = "sid" ] ; then \
-    cd /usr/local/share/texmf && \
-    mkdir fonts && cd fonts && \
-    mv /usr/share/fonts/opentype/urw-base35/StandardSymbolsPS.otf . && \
-    fc-cache -s ; \
-    fi
+#RUN if [ "$REL" = "bullseye" -o "$REL" = "sid" ] ; then \
+#    cd /usr/local/share/texmf && \
+#    mkdir fonts && cd fonts && \
+#    mv /usr/share/fonts/opentype/urw-base35/StandardSymbolsPS.otf . && \
+#    fc-cache -s ; \
+#    fi
 COPY sarasa-mono-k-regular.ttf sarasa-mono-k-bold.ttf sarasa-mono-k-italic.ttf sarasa-mono-k-bolditalic.ttf /usr/local/share/fonts/
 RUN fc-cache /usr/local/share/fonts/
-COPY requirements-latest.txt /opt/
+COPY requirements-latest.txt requirements.txt requirements-1.7.9.txt /opt/
 ARG uid=0
 ARG gid=0
 ARG user=kerneldoc
@@ -64,6 +72,16 @@ RUN if [ $uid -ne 0 ] ; then \
     fi
 USER $uid:$gid
 WORKDIR /home/kerneldoc
+RUN /usr/bin/python3 -m venv sphinx_1.7.9 && \
+    . sphinx_1.7.9/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements-1.7.9.txt && \
+    deactivate
+RUN /usr/bin/python3 -m venv sphinx_2.4.4 && \
+    . sphinx_2.4.4/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r /opt/requirements.txt && \
+    deactivate
 RUN /usr/bin/python3 -m venv sphinx_latest && \
     . sphinx_latest/bin/activate && \
     pip install --upgrade pip && \
