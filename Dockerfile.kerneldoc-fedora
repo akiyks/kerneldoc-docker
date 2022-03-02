@@ -5,7 +5,8 @@ FROM fedora:$rel
 RUN dnf -y update && \
     dnf install -y --setopt=tsflags=nodocs --setopt=install_weak_deps=False \
     make graphviz latexmk \
-    dejavu-sans-mono-fonts dejavu-serif-fonts google-noto-cjk-fonts \
+    dejavu-sans-mono-fonts dejavu-sans-fonts dejavu-serif-fonts \
+    google-noto-cjk-fonts \
     liberation-mono-fonts liberation-serif-fonts liberation-sans-fonts \
     texlive-xecjk texlive-ctex \
     texlive-amscls texlive-anyfontsize texlive-capt-of texlive-cmap \
