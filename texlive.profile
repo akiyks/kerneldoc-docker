@@ -9,7 +9,7 @@ TEXMFLOCAL /usr/local/texlive/texmf-local
 TEXMFSYSCONFIG /usr/local/texlive/2021/texmf-config
 TEXMFSYSVAR /usr/local/texlive/2021/texmf-var
 TEXMFVAR ~/.texlive2021/texmf-var
-binary_x86_64-linux 1
+binary_x86_64-linuxmusl 1
 instopt_adjustpath 0
 instopt_adjustrepo 1
 instopt_letter 0
