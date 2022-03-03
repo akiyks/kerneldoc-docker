@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM frolvlad/alpine-glibc
 # ARG variable example use:
 # --build-arg ink=0 --build-arg img=1
 #
@@ -9,14 +9,12 @@ FROM alpine:latest
 #   xdvipdfmx can't handle translations.xdv on alpine:3.14 and later
 #   For the moment, not having font-noto-cjk and skipping CJK chapters
 #   looks like a reasonable compromise avoiding error in "make pdfdocs".
-#   See Dockerfile.kerneldoc-alpine-glibc for a glibc based approach,
-#   but be warned that it is only a happens-to-work thing.
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 TEXLIVE_INSTALL_NO_CONTEXT_CACHE=1 NOPERLDOC=1
 RUN apk -U add --no-cache make graphviz \
     perl python3 wget \
     ca-certificates bash grep sed \
     coreutils ttf-liberation ttf-dejavu
-COPY texlive.profile /opt/texlive.profile
+COPY texlive.both.profile /opt/texlive.profile
 WORKDIR /opt
 # Alternatives of tlrepo in or near JP
 #  https://ftp.jaist.ac.jp/pub/CTAN/systems/texlive/tlnet
@@ -37,9 +35,11 @@ RUN tlmgr --repository $tlrepo install \
     wrapfig ctex latexmk varwidth titlesec \
     fancyvrb float setspace tex-gyre oberdiek dvipng && \
     tlmgr remove --force arphic fandol fonts-tlwg tipa uhc wadalab && \
-    find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} +
+    find /usr/local/texlive/2021/texmf-var/ -name "*.log" -exec rm \{\} + && \
+    cd /usr/local/texlive/2021/bin/x86_64-linuxmusl && \
+    ln -sf ../x86_64-linux/xdvipdfmx xdvipdfmx
 ARG ink=1
-RUN if [ $ink -ne 0 ] ; then apk -U add --no-cache inkscape ; \
+RUN if [ $ink -ne 0 ] ; then apk -U add --no-cache inkscape font-noto-cjk ; \
     fi
 ARG img=0
 RUN if [ $img -ne 0 ] ; then apk -U add --no-cache imagemagick ; \
